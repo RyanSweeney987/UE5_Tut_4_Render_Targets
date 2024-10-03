@@ -1,0 +1,28 @@
+﻿// #include "/Engine/Public/Platform.ush"
+#include "/Engine/Private/Common.ush"
+
+// These contain various functions and structs that may be useful - not a complete list
+// #include "/Engine/Generated/GeneratedUniformBuffers.ush" 
+// #include "/Engine/Private/DeferredShadingCommon.ush"
+// #include "/Engine/Private/ColorUtils.ush"
+// #include "/Engine/Private/DistanceField/GlobalDistanceFieldShared.ush"
+// #include "/Engine/Private/Random.ush"
+// #include "/Engine/Private/SceneTexturesCommon.ush"
+// #include "/Engine/Private/SceneData.ush"
+// #include "/Engine/Private/Common.ush"
+// #include "/Engine/Private/DeferredShadingCommon.ush"
+// #include "/Engine/Private/ScreenPass.ush"
+// #include "/Engine/Private/SceneTexturesCommon.ush"
+// #include "/Engine/Private/SceneTextureParameters.ush"
+
+float2 TextureSize;
+
+SamplerState SceneColorSampler;
+
+Texture2D<float4> SceneColorTexture;
+
+float4 MainPS(float4 SvPosition : SV_POSITION) : SV_Target0 {
+	const float2 UV = SvPosition.xy / TextureSize;
+	const float4 SceneColour = SceneColorTexture.SampleLevel(SceneColorSampler, UV, 0);
+	return 1 - SceneColour;
+}
