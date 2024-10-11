@@ -27,6 +27,7 @@ void FRenderTargetSceneViewExtension::PrePostProcessPass_RenderThread(FRDGBuilde
 	if(!PooledRenderTarget.IsValid())
 	{
 		// Only needs to be done once
+		// However, if you modify the render target asset, eg: change the resolution or pixel format, you may need to recreate the PooledRenderTarget object
 		CreatePooledRenderTarget_RenderThread();
 	}
 	
