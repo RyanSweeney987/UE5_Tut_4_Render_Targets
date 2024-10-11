@@ -1,2 +1,5 @@
-# UE5_Tut_4_Render_Targets
-Tutorial code for how to access your render target data from the shaders
+//-----------------------------------------------------
+
+Git: In your plugin folder run the following: git clone https://github.com/RyanSweeney987/UE5_Tut_4_Render_Targets.git
+
+Download: Open the repo, click on the green "<> code" button and click on the "Download ZIP" option. When downloaded, extract the contents into the plugin folder, ensuring the following hierarchy:
