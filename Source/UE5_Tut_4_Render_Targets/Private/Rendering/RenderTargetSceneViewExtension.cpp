@@ -29,17 +29,17 @@ void FRenderTargetSceneViewExtension::PrePostProcessPass_RenderThread(FRDGBuilde
 		// Only needs to be done once
 		CreatePooledRenderTarget_RenderThread();
 	}
-
-	// Needs to be registered every frame
-	FRDGTextureRef RenderTargetTexture = GraphBuilder.RegisterExternalTexture(PooledRenderTarget, TEXT("Bound Render Target"));
-	// Since we're rendering to the render target, we're going to use the full size of the render target rather than the screen
-	const FIntRect RenderViewport = FIntRect(0, 0, RenderTargetTexture->Desc.Extent.X, RenderTargetTexture->Desc.Extent.Y);
-
+	
 	checkSlow(View.bIsViewInfo);
 	const FIntRect Viewport = static_cast<const FViewInfo&>(View).ViewRect;
 	const FGlobalShaderMap* GlobalShaderMap = GetGlobalShaderMap(GMaxRHIFeatureLevel);
 
 	const FScreenPassTexture SceneColourTexture((*Inputs.SceneTextures)->SceneColorTexture, Viewport);
+
+	// Needs to be registered every frame
+	FRDGTextureRef RenderTargetTexture = GraphBuilder.RegisterExternalTexture(PooledRenderTarget, TEXT("Bound Render Target"));
+	// Since we're rendering to the render target, we're going to use the full size of the render target rather than the screen
+	const FIntRect RenderViewport = FIntRect(0, 0, RenderTargetTexture->Desc.Extent.X, RenderTargetTexture->Desc.Extent.Y);
 	
 	FInvertColourPS::FParameters* Parameters = GraphBuilder.AllocParameters<FInvertColourPS::FParameters>();
 	Parameters->TextureSize = RenderTargetTexture->Desc.Extent;

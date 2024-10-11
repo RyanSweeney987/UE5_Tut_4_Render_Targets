@@ -14,8 +14,6 @@ class UE5_TUT_4_RENDER_TARGETS_API FRenderTargetSceneViewExtension : public FSce
 {
 private:
 	TObjectPtr<UTextureRenderTarget2D> RenderTargetSource = nullptr;
-
-	// Set upon creation and then used for all subsequent render passes in the RegisterSourcePooledTexture function
 	TRefCountPtr<IPooledRenderTarget> PooledRenderTarget;
 public:
 	FRenderTargetSceneViewExtension(const FAutoRegister& AutoRegister);
