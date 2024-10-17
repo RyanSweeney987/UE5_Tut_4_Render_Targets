@@ -26,3 +26,12 @@ float4 MainPS(float4 SvPosition : SV_POSITION) : SV_Target0 {
 	const float4 SceneColour = SceneColorTexture.SampleLevel(SceneColorSampler, UV, 0);
 	return 1 - SceneColour;
 }
+
+RWTexture2D<float4> OutputTexture;
+
+[numthreads(16, 16, 1)]
+void MainCS(uint3 DispatchThreadID : SV_DispatchThreadID) {
+    const float2 UV = DispatchThreadID.xy / TextureSize;
+    const float4 SceneColour = SceneColorTexture.SampleLevel(SceneColorSampler, UV, 0);
+    OutputTexture[DispatchThreadID.xy] = 1 - SceneColour;
+}

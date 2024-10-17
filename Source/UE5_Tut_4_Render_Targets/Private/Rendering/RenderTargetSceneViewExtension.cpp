@@ -9,6 +9,7 @@
 #include "RenderGraphBuilder.h"
 #include "RenderTargetPool.h"
 #include "Engine/TextureRenderTarget2D.h"
+#include "ShaderPasses/InvertColourComputePass.h"
 #include "ShaderPasses/InvertColourRenderPass.h"
 
 FRenderTargetSceneViewExtension::FRenderTargetSceneViewExtension(const FAutoRegister& AutoRegister) : FSceneViewExtensionBase(AutoRegister)
@@ -39,9 +40,12 @@ void FRenderTargetSceneViewExtension::PrePostProcessPass_RenderThread(FRDGBuilde
 
 	// Needs to be registered every frame
 	FRDGTextureRef RenderTargetTexture = GraphBuilder.RegisterExternalTexture(PooledRenderTarget, TEXT("Bound Render Target"));
+
 	// Since we're rendering to the render target, we're going to use the full size of the render target rather than the screen
 	const FIntRect RenderViewport = FIntRect(0, 0, RenderTargetTexture->Desc.Extent.X, RenderTargetTexture->Desc.Extent.Y);
 	
+	// True for pixel shader, false for compute shader
+#if true
 	FInvertColourPS::FParameters* Parameters = GraphBuilder.AllocParameters<FInvertColourPS::FParameters>();
 	Parameters->TextureSize = RenderTargetTexture->Desc.Extent;
 	Parameters->SceneColorSampler = TStaticSamplerState<SF_Bilinear, AM_Clamp, AM_Clamp, AM_Clamp>::GetRHI();
@@ -51,6 +55,25 @@ void FRenderTargetSceneViewExtension::PrePostProcessPass_RenderThread(FRDGBuilde
 	
 	TShaderMapRef<FInvertColourPS> PixelShader(GlobalShaderMap);
 	FPixelShaderUtils::AddFullscreenPass(GraphBuilder, GlobalShaderMap, FRDGEventName(TEXT("Render Target Pass")), PixelShader, Parameters, RenderViewport);
+#else
+	FRDGTextureRef TempTexture = GraphBuilder.CreateTexture(RenderTargetTexture->Desc, TEXT("Temp Texture"));
+	FRDGTextureUAVDesc TempUAVDesc = FRDGTextureUAVDesc(TempTexture);
+	FRDGTextureUAVRef TempUAV = GraphBuilder.CreateUAV(TempUAVDesc);
+
+	const FIntPoint ThreadCount = RenderViewport.Size();
+	const FIntVector GroupCount = FComputeShaderUtils::GetGroupCount(ThreadCount, FIntPoint(16, 16));
+	
+	FInvertColourCS::FParameters* Parameters = GraphBuilder.AllocParameters<FInvertColourCS::FParameters>();
+	Parameters->TextureSize = RenderTargetTexture->Desc.Extent;
+	Parameters->SceneColorSampler = TStaticSamplerState<SF_Bilinear, AM_Clamp, AM_Clamp, AM_Clamp>::GetRHI();
+	Parameters->SceneColorTexture = SceneColourTexture.Texture;
+	Parameters->OutputTexture = TempUAV;
+	
+	TShaderMapRef<FInvertColourCS> ComputeShader(GlobalShaderMap);
+	FComputeShaderUtils::AddPass(GraphBuilder, FRDGEventName(TEXT("Render Target Compute Pass")), ERDGPassFlags::Compute, ComputeShader, Parameters, GroupCount);
+	
+	AddCopyTexturePass(GraphBuilder, TempTexture, RenderTargetTexture);
+#endif
 }
 
 void FRenderTargetSceneViewExtension::SetRenderTarget(UTextureRenderTarget2D* RenderTarget)
